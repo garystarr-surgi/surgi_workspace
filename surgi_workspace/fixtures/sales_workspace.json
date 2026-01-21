@@ -1,1 +1,17 @@
+[
+  {
+    "doctype": "Workspace",
+    "name": "Sales Workspace",
+    "title": "Sales Workspace",
+    "module": "Selling",
+    "icon": "sell",
+    "is_hidden": 0,
+    "content": [
+      {"id":"n0XfyPOOlL","type":"header","data":{"text":"<span class=\"h4\">Sales Workspace</span>","col":12}},
+      {"id":"EqfonieJRR","type":"card","data":{"card_name":"Selling","col":4}},
+      {"id":"jsPWbLHbEI","type":"card","data":{"card_name":"Reports","col":4}}
+    ],
+    "roles": ["Sales User"]
+  }
+]
 
