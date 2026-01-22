@@ -32,6 +32,11 @@
         }
       }
     ],
-    "roles": ["Sales User"]
+    "roles": [
+      {
+        "doctype": "Has Role",
+        "role": "Sales User"
+      }
+    ]
   }
 ]
