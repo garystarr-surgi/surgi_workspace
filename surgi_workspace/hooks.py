@@ -24,7 +24,6 @@ fixtures = [
         ]
     }
 ]
-EOF
 
 app_include_js = "/assets/surgi_workspace/js/desk.js"
 
