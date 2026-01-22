@@ -1,42 +1,120 @@
 [
   {
+    "charts": [],
+    "content": "[{\"id\": \"n0XfyPOOlL\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Sales Workspace</span>\", \"col\": 12}}, {\"id\": \"EqfonieJRR\", \"type\": \"card\", \"data\": {\"card_name\": \"Selling\", \"col\": 4}}, {\"id\": \"jsPWbLHbEI\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}]",
+    "creation": "2024-01-22 00:00:00.000000",
+    "custom_blocks": [],
+    "docstatus": 0,
     "doctype": "Workspace",
-    "name": "Sales Workspace",
-    "title": "Sales Workspace",
-    "module": "Selling",
+    "extends": "",
+    "extends_another_page": 0,
+    "hide_custom": 0,
     "icon": "sell",
+    "idx": 0,
+    "is_default": 0,
     "is_hidden": 0,
-    "content": [
+    "is_standard": 0,
+    "label": "Sales Workspace",
+    "links": [
       {
-        "id": "n0XfyPOOlL",
-        "type": "header",
-        "data": {
-          "text": "<span class=\"h4\">Sales Workspace</span>",
-          "col": 12
-        }
+        "hidden": 0,
+        "is_query_report": 0,
+        "label": "Selling",
+        "link_count": 0,
+        "onboard": 0,
+        "type": "Card Break"
       },
       {
-        "id": "EqfonieJRR",
-        "type": "card",
-        "data": {
-          "card_name": "Selling",
-          "col": 4
-        }
+        "hidden": 0,
+        "is_query_report": 0,
+        "label": "Customer",
+        "link_count": 0,
+        "link_to": "Customer",
+        "link_type": "DocType",
+        "onboard": 0,
+        "type": "Link"
       },
       {
-        "id": "jsPWbLHbEI",
-        "type": "card",
-        "data": {
-          "card_name": "Reports",
-          "col": 4
-        }
+        "hidden": 0,
+        "is_query_report": 0,
+        "label": "Quotation",
+        "link_count": 0,
+        "link_to": "Quotation",
+        "link_type": "DocType",
+        "onboard": 0,
+        "type": "Link"
+      },
+      {
+        "hidden": 0,
+        "is_query_report": 0,
+        "label": "Sales Order",
+        "link_count": 0,
+        "link_to": "Sales Order",
+        "link_type": "DocType",
+        "onboard": 0,
+        "type": "Link"
+      },
+      {
+        "hidden": 0,
+        "is_query_report": 0,
+        "label": "Sales Invoice",
+        "link_count": 0,
+        "link_to": "Sales Invoice",
+        "link_type": "DocType",
+        "onboard": 0,
+        "type": "Link"
+      },
+      {
+        "hidden": 0,
+        "is_query_report": 0,
+        "label": "Reports",
+        "link_count": 0,
+        "onboard": 0,
+        "type": "Card Break"
+      },
+      {
+        "hidden": 0,
+        "is_query_report": 1,
+        "label": "Sales Analytics",
+        "link_count": 0,
+        "link_to": "Sales Analytics",
+        "link_type": "Report",
+        "onboard": 0,
+        "type": "Link"
       }
     ],
+    "modified": "2024-01-22 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Selling",
+    "name": "Sales Workspace",
+    "owner": "Administrator",
+    "parent_page": "",
+    "public": 1,
+    "restrict_to_domain": "",
     "roles": [
       {
-        "doctype": "Has Role",
         "role": "Sales User"
       }
-    ]
+    ],
+    "sequence_id": 1,
+    "shortcuts": [
+      {
+        "color": "Blue",
+        "format": "{} Open",
+        "label": "Customer",
+        "link_to": "Customer",
+        "stats_filter": "{}",
+        "type": "DocType"
+      },
+      {
+        "color": "Orange",
+        "format": "{} Open",
+        "label": "Sales Order",
+        "link_to": "Sales Order",
+        "stats_filter": "{\"docstatus\": 0}",
+        "type": "DocType"
+      }
+    ],
+    "title": "Sales Workspace"
   }
 ]
