@@ -49,158 +49,169 @@
   }
 
   // ==========================
-  // HIDE/DISABLE WORKSPACE SIDEBAR DROPDOWN (v16 - AGGRESSIVE)
+  // HIDE/DISABLE WORKSPACE SIDEBAR DROPDOWN (v16 - NUCLEAR OPTION)
   // ==========================
   function hideWorkspaceDropdown() {
-    // Find the sidebar element - try multiple common selectors
-    const sidebarSelectors = [
-      'aside[class*="sidebar"]',
-      '.desk-sidebar',
-      '.sidebar-column',
-      '[class*="sidebar"]',
-      'nav[class*="sidebar"]',
-      '.standard-sidebar',
-      '.workspace-sidebar'
-    ];
-
-    let sidebar = null;
-    for (const selector of sidebarSelectors) {
-      sidebar = document.querySelector(selector);
-      if (sidebar) break;
-    }
-
+    // Find sidebar - try all possible selectors
+    const sidebar = document.querySelector('aside, [class*="sidebar"], .desk-sidebar, .sidebar-column, nav[class*="sidebar"]');
     if (!sidebar) return;
 
-    // Hide any dropdown/button in the first section of sidebar (typically the header/selector area)
-    // This targets the workspace selector which is usually the first interactive element
-    const firstSection = sidebar.querySelector(':scope > *:first-child, :scope > header, :scope > .header, :scope > [class*="header"]');
-    
-    if (firstSection) {
-      // Find all interactive elements in the first section
-      const interactiveElements = firstSection.querySelectorAll(
-        'button, a, [role="button"], [role="combobox"], .dropdown, .dropdown-toggle, [class*="dropdown"], [class*="select"], select'
-      );
+    // Walk through all children of sidebar and hide dropdowns/selectors in the top area
+    const walkAndHide = (element, depth = 0, maxDepth = 5) => {
+      if (depth > maxDepth) return;
+      if (!element || !element.children) return;
 
-      interactiveElements.forEach(el => {
-        // Skip user menu, avatar, logout
-        if (el.closest('.user-menu') || 
-            el.closest('.avatar') || 
-            el.closest('.user-avatar') ||
-            el.closest('[class*="user"]') ||
-            el.textContent?.toLowerCase().includes('logout') ||
-            el.getAttribute('aria-label')?.toLowerCase().includes('user') ||
-            el.getAttribute('aria-label')?.toLowerCase().includes('logout')) {
+      Array.from(element.children).forEach(child => {
+        // Skip user menu area completely
+        if (child.closest && (
+          child.closest('.user-menu') || 
+          child.closest('[class*="user-menu"]') ||
+          child.closest('[class*="avatar"]') ||
+          child.classList.contains('user-menu') ||
+          child.classList.contains('avatar')
+        )) {
           return;
         }
 
-        // Hide it - this is likely the workspace selector
-        if (!el.dataset.hidden) {
-          el.dataset.hidden = "1";
-          el.style.cssText = "display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;";
-          el.setAttribute('aria-hidden', 'true');
-          el.setAttribute('tabindex', '-1');
-        }
-      });
-    }
+        const tagName = child.tagName?.toLowerCase();
+        const className = child.className?.toLowerCase() || '';
+        const id = child.id?.toLowerCase() || '';
+        const text = (child.textContent || child.innerText || '').toLowerCase();
+        const ariaLabel = (child.getAttribute('aria-label') || '').toLowerCase();
+        const role = (child.getAttribute('role') || '').toLowerCase();
 
-    // Also target common workspace selector patterns
-    const workspaceSelectors = [
-      // Class-based selectors
-      '.workspace-selector',
-      '.sidebar-workspace-selector',
-      '.workspace-switcher',
-      '.workspace-dropdown',
-      '.workspace-selector-dropdown',
+        // Check if this looks like a workspace selector
+        const isWorkspaceSelector = 
+          className.includes('workspace') ||
+          className.includes('switcher') ||
+          className.includes('selector') ||
+          id.includes('workspace') ||
+          text.includes('workspace') ||
+          ariaLabel.includes('workspace') ||
+          ariaLabel.includes('switch') ||
+          role === 'combobox' ||
+          child.hasAttribute('data-workspace') ||
+          child.hasAttribute('data-workspace-selector') ||
+          (tagName === 'button' && !text.includes('logout') && !text.includes('user')) ||
+          (tagName === 'select') ||
+          (className.includes('dropdown') && !className.includes('user'));
+
+        // Get position to check if it's in the top area
+        const rect = child.getBoundingClientRect();
+        const sidebarRect = sidebar.getBoundingClientRect();
+        const isInTopArea = rect.top < sidebarRect.top + (sidebarRect.height * 0.3); // Top 30%
+
+        if (isWorkspaceSelector && isInTopArea && !child.dataset.surgiHidden) {
+          // Remove from DOM completely or hide aggressively
+          child.dataset.surgiHidden = "1";
+          child.style.cssText = "display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; height: 0 !important; width: 0 !important; overflow: hidden !important;";
+          child.setAttribute('aria-hidden', 'true');
+          child.setAttribute('tabindex', '-1');
+          
+          // Also prevent any events
+          ['click', 'mousedown', 'mouseup', 'touchstart', 'touchend'].forEach(eventType => {
+            child.addEventListener(eventType, (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+              return false;
+            }, true);
+          });
+        }
+
+        // Recursively check children
+        walkAndHide(child, depth + 1, maxDepth);
+      });
+    };
+
+    // Start walking from sidebar
+    walkAndHide(sidebar);
+
+    // Also use querySelector as backup for common patterns
+    const commonSelectors = [
+      'button[class*="workspace"]',
       '[class*="workspace-selector"]',
       '[class*="workspace-switcher"]',
-      '[class*="workspace-dropdown"]',
-      // Data attribute selectors
       '[data-workspace]',
       '[data-workspace-selector]',
-      '[data-workspace-switcher]',
-      '[data-label*="Workspace" i]',
-      '[data-label*="Switch" i]',
-      '[aria-label*="workspace" i]',
-      '[aria-label*="switch" i]',
-      // Position-based: first button/dropdown in sidebar (excluding user menu)
-      'aside button:first-of-type:not([class*="user"]):not([class*="avatar"])',
-      'aside .dropdown:first-of-type:not([class*="user"])',
-      'aside [role="combobox"]:first-of-type',
-      // Frappe UI specific patterns
-      '[data-testid*="workspace"]',
-      '[data-testid*="selector"]',
-      '.frappe-control[class*="workspace"]',
-      // Vue component patterns
-      '[data-v-] [class*="workspace-selector"]',
-      '[data-v-] [class*="workspace-switcher"]'
+      'select',
+      '[role="combobox"]',
+      '.dropdown:not([class*="user"])',
+      '.dropdown-toggle:not([class*="user"])'
     ];
 
-    workspaceSelectors.forEach(selector => {
+    commonSelectors.forEach(selector => {
       try {
-        const elements = document.querySelectorAll(selector);
+        const elements = sidebar.querySelectorAll(selector);
         elements.forEach(el => {
-          // Skip user menu area
-          if (el.closest('.user-menu') || el.closest('[class*="user-menu"]')) {
+          if (el.closest('.user-menu') || el.closest('[class*="user-menu"]') || el.closest('[class*="avatar"]')) {
             return;
           }
 
-          if (!el.dataset.hidden) {
-            el.dataset.hidden = "1";
-            el.style.cssText = "display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;";
+          const rect = el.getBoundingClientRect();
+          const sidebarRect = sidebar.getBoundingClientRect();
+          if (rect.top < sidebarRect.top + (sidebarRect.height * 0.3) && !el.dataset.surgiHidden) {
+            el.dataset.surgiHidden = "1";
+            el.style.cssText = "display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; height: 0 !important; width: 0 !important; overflow: hidden !important;";
             el.setAttribute('aria-hidden', 'true');
             el.setAttribute('tabindex', '-1');
+            
+            // Prevent events
+            ['click', 'mousedown', 'mouseup', 'touchstart', 'touchend'].forEach(eventType => {
+              el.addEventListener(eventType, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                return false;
+              }, true);
+            });
           }
         });
       } catch (e) {
-        // Ignore invalid selectors
+        // Ignore
       }
     });
+  }
 
-    // Hide any open dropdown menus that might be workspace selectors
-    const openDropdowns = document.querySelectorAll(
-      '.dropdown-menu.show, .dropdown-menu[style*="display"], [class*="dropdown-menu"][class*="show"]'
-    );
-    openDropdowns.forEach(menu => {
-      const menuText = (menu.innerText || menu.textContent || '').toLowerCase();
-      const menuParent = menu.closest('aside, .sidebar, [class*="sidebar"]');
+  // ==========================
+  // PREVENT CLICKS ON WORKSPACE SELECTOR (v16)
+  // ==========================
+  function preventWorkspaceSelectorClicks() {
+    // Use event delegation to catch all clicks in sidebar
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      const sidebar = target.closest('aside, [class*="sidebar"], .desk-sidebar, .sidebar-column');
       
-      // If dropdown is in sidebar and contains workspace-related text, hide it
-      if (menuParent && (menuText.includes('workspace') || menuText.includes('switch'))) {
-        menu.style.cssText = "display: none !important; visibility: hidden !important;";
+      if (!sidebar) return;
+      
+      // Skip user menu
+      if (target.closest('.user-menu') || target.closest('[class*="user-menu"]') || target.closest('[class*="avatar"]')) {
+        return;
       }
-    });
 
-    // Nuclear option: Hide the first non-user interactive element in sidebar
-    if (sidebar) {
-      const allInteractive = sidebar.querySelectorAll(
-        'button, a, [role="button"], [role="combobox"], .dropdown, .dropdown-toggle'
-      );
-      
-      for (const el of allInteractive) {
-        // Skip user menu, avatar, logout
-        if (el.closest('.user-menu') || 
-            el.closest('.avatar') || 
-            el.closest('[class*="user-menu"]') ||
-            el.closest('[class*="avatar"]') ||
-            el.textContent?.toLowerCase().includes('logout')) {
-          continue;
-        }
-
-        // If this is the first interactive element (likely workspace selector), hide it
-        const rect = el.getBoundingClientRect();
-        const sidebarRect = sidebar.getBoundingClientRect();
+      // Check if click is in top area of sidebar
+      const sidebarRect = sidebar.getBoundingClientRect();
+      if (e.clientY < sidebarRect.top + (sidebarRect.height * 0.3)) {
+        // Check if target looks like workspace selector
+        const text = (target.textContent || target.innerText || '').toLowerCase();
+        const className = (target.className || '').toLowerCase();
+        const ariaLabel = (target.getAttribute('aria-label') || '').toLowerCase();
         
-        // Check if element is in the top 20% of sidebar (where workspace selector usually is)
-        if (rect.top < sidebarRect.top + (sidebarRect.height * 0.2)) {
-          if (!el.dataset.hidden) {
-            el.dataset.hidden = "1";
-            el.style.cssText = "display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;";
-            el.setAttribute('aria-hidden', 'true');
-            el.setAttribute('tabindex', '-1');
-          }
+        if (text.includes('workspace') || 
+            className.includes('workspace') || 
+            className.includes('switcher') || 
+            className.includes('selector') ||
+            ariaLabel.includes('workspace') ||
+            ariaLabel.includes('switch') ||
+            target.tagName === 'SELECT' ||
+            target.getAttribute('role') === 'combobox') {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          return false;
         }
       }
-    }
+    }, true); // Use capture phase
   }
 
   // ==========================
@@ -274,20 +285,32 @@
     const style = document.createElement('style');
     style.id = styleId;
     style.textContent = `
-      /* Hide workspace selector in sidebar - Sales Users only */
-      aside[class*="sidebar"] > *:first-child button:not([class*="user"]):not([class*="avatar"]):not([class*="logout"]),
-      aside[class*="sidebar"] > *:first-child .dropdown:not([class*="user"]),
-      aside[class*="sidebar"] > *:first-child [role="combobox"]:not([class*="user"]),
+      /* Hide workspace selector in sidebar - Sales Users only - NUCLEAR OPTION */
+      aside button:not([class*="user"]):not([class*="avatar"]):not([class*="logout"]):first-of-type,
+      aside > *:first-child button:not([class*="user"]):not([class*="avatar"]):not([class*="logout"]),
+      aside > *:first-child > button:not([class*="user"]):not([class*="avatar"]):not([class*="logout"]),
+      aside .dropdown:not([class*="user"]):not([class*="avatar"]):first-of-type,
+      aside > *:first-child .dropdown:not([class*="user"]):not([class*="avatar"]),
+      aside [role="combobox"]:not([class*="user"]):not([class*="avatar"]):first-of-type,
+      aside select:not([class*="user"]):not([class*="avatar"]):first-of-type,
       .workspace-selector,
       [class*="workspace-selector"],
       [class*="workspace-switcher"],
+      [class*="workspace-dropdown"],
       [data-workspace-selector],
       [data-workspace-switcher],
-      [aria-label*="workspace" i]:not([aria-label*="user" i]):not([aria-label*="logout" i]) {
+      [data-workspace],
+      [aria-label*="workspace" i]:not([aria-label*="user" i]):not([aria-label*="logout" i]),
+      [aria-label*="switch" i]:not([aria-label*="user" i]):not([aria-label*="logout" i]) {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
         pointer-events: none !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
       }
     `;
     document.head.appendChild(style);
@@ -307,8 +330,11 @@
     // Inject CSS for additional hiding support
     injectHidingCSS();
 
+    // Prevent clicks on workspace selector
+    preventWorkspaceSelectorClicks();
+
     // Continuous enforcement (Vue remounts constantly)
-    setInterval(enforce, 250);
+    setInterval(enforce, 100); // More frequent checking
 
     // DOM mutation observer
     const observer = new MutationObserver(enforce);
