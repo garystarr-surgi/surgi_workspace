@@ -7,19 +7,12 @@
   const ADMIN_ROLE = "System Manager";
   const SALES_WORKSPACE = "selling";
 
-  const BLOCKED_ROUTES = [
-    "/app/workspace",
-    "/app/workspaces",
-    "/app/desktop",
-    "/app/website"
-  ];
-
-  const BLOCKED_MENU_TEXT = [
-    "workspace",
-    "desktop",
-    "website",
-    "help",
-    "session defaults"
+  const REMOVE_ITEMS = [
+    "Workspaces",
+    "Desktop",
+    "Website",
+    "Help",
+    "Session Defaults"
   ];
 
   // ==========================
@@ -29,18 +22,14 @@
     return frappe?.user_roles?.includes(role);
   }
 
-  function isAdmin() {
-    return hasRole(ADMIN_ROLE);
-  }
-
   function isSalesUser() {
-    return hasRole(SALES_ROLE) && !isAdmin();
+    return hasRole(SALES_ROLE) && !hasRole(ADMIN_ROLE);
   }
 
   // ==========================
   // FORCE SALES WORKSPACE
   // ==========================
-  function enforceSalesWorkspace() {
+  function enforceWorkspace() {
     if (!frappe?.set_route) return;
 
     if (!window.location.pathname.startsWith(`/app/${SALES_WORKSPACE}`)) {
@@ -49,106 +38,19 @@
   }
 
   // ==========================
-  // BLOCK FORBIDDEN LINKS
+  // CLEAN DROPDOWN MENUS
   // ==========================
-  function blockNavigation() {
-    document.addEventListener("click", (e) => {
-      if (!isSalesUser()) return;
-
-      const link = e.target.closest("a");
-      if (!link) return;
-
-      const href = link.getAttribute("href") || "";
-      const text = (link.innerText || "").toLowerCase();
-
-      // Allow safe actions
-      if (
-        text.includes("reload") ||
-        text.includes("toggle") ||
-        text.includes("theme") ||
-        text.includes("logout")
-      ) {
-        return;
-      }
-
-      if (
-        BLOCKED_ROUTES.some(r => href.startsWith(r)) ||
-        BLOCKED_MENU_TEXT.some(t => text.includes(t))
-      ) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-
-        frappe.show_alert({
-          message: __("Access restricted"),
-          indicator: "red"
-        });
-
-        enforceSalesWorkspace();
-        return false;
-      }
-    }, true);
-  }
-
-  // ==========================
-  // LOCK ROUTER (CRITICAL)
-  // ==========================
-  function lockRouter() {
-    if (!frappe?.router) return;
-
-    frappe.router.on("change", (route) => {
-      if (!isSalesUser()) return;
-
-      const path = route.join("/");
-
-      if (
-        path.startsWith("workspace") ||
-        path.startsWith("desktop") ||
-        path.startsWith("website")
-      ) {
-        enforceSalesWorkspace();
-      }
-    });
-  }
-
-  // ==========================
-  // AUTO-CLOSE WORKSPACE DROPDOWN
-  // ==========================
-  function autoCloseDropdown() {
-    document.addEventListener("click", () => {
-      if (!isSalesUser()) return;
-
-      document.querySelectorAll(".dropdown-menu.show").forEach(menu => {
-        const text = menu.innerText.toLowerCase();
-
-        if (
-          text.includes("workspace") ||
-          text.includes("desktop") ||
-          text.includes("website")
-        ) {
-          menu.classList.remove("show");
-        }
-      });
-    }, true);
-  }
-
-  // ==========================
-  // CLEAN USER MENU (TOOLBAR)
-  // ==========================
-  function cleanUserMenu() {
+  function cleanMenus() {
     if (!frappe?.ui?.toolbar?.user_menu) return;
 
     const menu = frappe.ui.toolbar.user_menu;
 
-    [
-      "Workspaces",
-      "Desktop",
-      "Website",
-      "Help",
-      "Session Defaults"
-    ].forEach(label => {
+    REMOVE_ITEMS.forEach(label => {
       try {
         menu.remove_item(label);
-      } catch (e) {}
+      } catch (e) {
+        // already removed
+      }
     });
   }
 
@@ -163,20 +65,21 @@
 
     if (!isSalesUser()) return;
 
-    // Wait for toolbar
-    const waitForToolbar = setInterval(() => {
+    // Wait for toolbar to mount
+    const wait = setInterval(() => {
       if (frappe?.ui?.toolbar?.user_menu) {
-        clearInterval(waitForToolbar);
-        cleanUserMenu();
+        clearInterval(wait);
+        cleanMenus();
+        enforceWorkspace();
       }
     }, 100);
 
-    blockNavigation();
-    lockRouter();
-    autoCloseDropdown();
-
-    // Enforce on load + Vue rebuilds
-    setInterval(enforceSalesWorkspace, 500);
+    // Re-apply once on route change (Vue remount)
+    if (frappe.router) {
+      frappe.router.on("change", () => {
+        setTimeout(cleanMenus, 100);
+      });
+    }
   }
 
   init();
