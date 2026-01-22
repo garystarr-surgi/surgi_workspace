@@ -13,6 +13,13 @@ def ensure_sales_sidebar():
         },
         {
             "type": "Link",
+            "label": "Quotation",
+            "link_to": "Quotation",
+            "link_type": "DocType",
+            "icon": "sell",
+        },
+        {
+            "type": "Link",
             "label": "Sales Orders",
             "link_to": "Sales Order",
             "link_type": "DocType",
