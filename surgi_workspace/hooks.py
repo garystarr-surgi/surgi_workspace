@@ -24,3 +24,7 @@ fixtures = [
 
 app_include_js = "/assets/surgi_workspace/js/desk.js"
 
+after_install = "surgi_workspace.workspace_sidebar.ensure_sales_sidebar"
+after_migrate = "surgi_workspace.workspace_sidebar.ensure_sales_sidebar"
+
+
