@@ -1,94 +1,141 @@
 (function () {
   // ==========================
-  // CONFIG
+  // CONFIGURATION
   // ==========================
-  const SALES_ROLE = "Sales User";
-  const ALLOWED_WORKSPACE = "Selling";
+  const ROLE_RULES = {
+    "Sales User": {
+      landing: "selling",
+      dropdown_block: [
+        "Workspaces",
+        "Desktop",
+        "Edit Sidebar",
+        "Website",
+        "Help",
+        "Session Defaults"
+      ]
+    }
+  };
 
-  const BLOCKED_MENU_ITEMS = [
-    "Workspaces",
-    "Desktop",
-    "Website",
-    "Help",
-    "Session Defaults",
-  ];
+  const ADMIN_ROLES = ["System Manager"];
 
   // ==========================
   // HELPERS
   // ==========================
-  function isSalesUser() {
-    return (
-      window.frappe &&
-      frappe.user_roles &&
-      frappe.user_roles.includes(SALES_ROLE)
-    );
+  function hasRole(role) {
+    return frappe?.user_roles?.includes(role) || false;
   }
 
-  function currentRoute() {
-    return frappe.get_route && frappe.get_route();
+  function isAdmin() {
+    return ADMIN_ROLES.some(hasRole);
   }
 
-  function isInSelling() {
-    const route = currentRoute();
-    return route && route[0] === "workspace" && route[1] === ALLOWED_WORKSPACE;
+  function getActiveRule() {
+    for (const role in ROLE_RULES) {
+      if (hasRole(role)) return ROLE_RULES[role];
+    }
+    return null;
   }
 
   // ==========================
   // FORCE SELLING WORKSPACE
   // ==========================
-  function forceSellingWorkspace() {
-    if (!isSalesUser()) return;
+  function enforceLanding(rule) {
+    if (!rule?.landing || !frappe?.set_route) return;
 
-    if (!isInSelling()) {
-      frappe.set_route("workspace", ALLOWED_WORKSPACE);
+    const target = `/app/${rule.landing}`;
+    if (!window.location.pathname.startsWith(target)) {
+      frappe.set_route(rule.landing);
     }
   }
 
   // ==========================
-  // CLEAN SIDEBAR DROPDOWN
+  // DISABLE USER DROPDOWN ITEMS (v16 CORRECT)
   // ==========================
-  function cleanSidebarDropdown() {
-    if (!isSalesUser()) return;
+  function disableMenuItems(rule) {
+    if (!rule?.dropdown_block) return;
 
-    // v16 toolbar dropdown
-    const menu = document.querySelector(".navbar .dropdown-menu");
-    if (!menu) return;
+    const block = rule.dropdown_block.map(v => v.toLowerCase());
 
-    const items = menu.querySelectorAll("li");
+    document.querySelectorAll('.dropdown-menu-item').forEach(item => {
+      const text = item
+        .querySelector('.menu-item-title')
+        ?.innerText?.trim().toLowerCase();
 
-    items.forEach((li) => {
-      const text = li.innerText?.trim();
-      if (!text) return;
+      if (!text || !block.includes(text)) return;
+      if (item.dataset.locked) return;
 
-      if (BLOCKED_MENU_ITEMS.includes(text)) {
-        li.remove(); // safest: remove entirely
+      item.dataset.locked = "1";
+      item.style.opacity = "0.4";
+      item.style.pointerEvents = "none";
+    });
+  }
+
+  // ==========================
+  // LOCK LEFT SIDEBAR (SAFE)
+  // ==========================
+  function lockDeskSidebar() {
+    const sidebar = document.querySelector('.desk-sidebar, .sidebar-column');
+    if (!sidebar) return;
+
+    sidebar.querySelectorAll('a, button').forEach(el => {
+      const text = el.innerText?.toLowerCase() || '';
+
+      // allow logout & avatar
+      if (
+        text.includes('logout') ||
+        el.closest('.user-menu') ||
+        el.closest('.avatar')
+      ) {
+        el.style.pointerEvents = 'auto';
+        return;
       }
+
+      el.style.pointerEvents = 'none';
     });
   }
 
   // ==========================
-  // INIT
+  // MAIN ENFORCEMENT LOOP
   // ==========================
-  function initSalesLock() {
-    if (!isSalesUser()) return;
+  function enforce() {
+    if (!frappe?.user_roles || isAdmin()) return;
 
-    // Initial enforcement
-    forceSellingWorkspace();
-    cleanSidebarDropdown();
+    const rule = getActiveRule();
+    if (!rule) return;
 
-    // Re-apply after route changes
-    frappe.router.on("change", () => {
-      setTimeout(() => {
-        forceSellingWorkspace();
-        cleanSidebarDropdown();
-      }, 300);
-    });
+    enforceLanding(rule);
+    disableMenuItems(rule);
+    lockDeskSidebar();
   }
 
   // ==========================
-  // BOOTSTRAP
+  // INIT (v16 REQUIRES PERSISTENCE)
   // ==========================
-  frappe.after_ajax(() => {
-    setTimeout(initSalesLock, 500);
-  });
+  function init() {
+    if (!frappe?.user_roles) {
+      setTimeout(init, 200);
+      return;
+    }
+
+    if (isAdmin()) return;
+
+    // Continuous enforcement (Vue remounts constantly)
+    setInterval(enforce, 250);
+
+    // DOM mutation observer
+    const observer = new MutationObserver(enforce);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // Route changes
+    if (frappe.router) {
+      frappe.router.on("change", enforce);
+    }
+
+    enforce();
+  }
+
+  init();
 })();
