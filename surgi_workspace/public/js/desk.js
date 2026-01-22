@@ -279,6 +279,18 @@
   // INJECT CSS TO HIDE WORKSPACE SELECTOR (v16)
   // ==========================
   function injectHidingCSS() {
+    // Load external CSS file for better reliability
+    const linkId = 'surgi-workspace-kiosk-css';
+    if (document.getElementById(linkId)) return;
+
+    const link = document.createElement('link');
+    link.id = linkId;
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = '/assets/surgi_workspace/css/kiosk_mode.css';
+    document.head.appendChild(link);
+
+    // Also inject inline CSS as backup
     const styleId = 'surgi-workspace-hide-selector';
     if (document.getElementById(styleId)) return;
 
@@ -317,6 +329,51 @@
   }
 
   // ==========================
+  // DEBUG: Log sidebar structure (enable for debugging)
+  // ==========================
+  function debugSidebarStructure() {
+    const sidebar = document.querySelector('aside, [class*="sidebar"], .desk-sidebar, .sidebar-column');
+    if (!sidebar) {
+      console.log('[Surgi Workspace] No sidebar found');
+      return;
+    }
+
+    console.log('[Surgi Workspace] Sidebar found:', sidebar);
+    console.log('[Surgi Workspace] Sidebar classes:', sidebar.className);
+    
+    // Log first few children
+    const children = Array.from(sidebar.children).slice(0, 5);
+    children.forEach((child, idx) => {
+      console.log(`[Surgi Workspace] Child ${idx}:`, {
+        tag: child.tagName,
+        classes: child.className,
+        id: child.id,
+        text: child.textContent?.substring(0, 50),
+        buttons: Array.from(child.querySelectorAll('button')).map(b => ({
+          text: b.textContent,
+          classes: b.className,
+          ariaLabel: b.getAttribute('aria-label')
+        }))
+      });
+    });
+
+    // Log all buttons in sidebar
+    const buttons = sidebar.querySelectorAll('button');
+    console.log(`[Surgi Workspace] Found ${buttons.length} buttons in sidebar:`);
+    buttons.forEach((btn, idx) => {
+      if (idx < 10) { // Log first 10
+        console.log(`[Surgi Workspace] Button ${idx}:`, {
+          text: btn.textContent,
+          classes: btn.className,
+          id: btn.id,
+          ariaLabel: btn.getAttribute('aria-label'),
+          dataAttrs: Array.from(btn.attributes).filter(a => a.name.startsWith('data-')).map(a => `${a.name}="${a.value}"`)
+        });
+      }
+    });
+  }
+
+  // ==========================
   // INIT (v16 REQUIRES PERSISTENCE)
   // ==========================
   function init() {
@@ -326,6 +383,9 @@
     }
 
     if (isAdmin()) return;
+
+    // Debug: Uncomment to see sidebar structure in console
+    // setTimeout(debugSidebarStructure, 2000);
 
     // Inject CSS for additional hiding support
     injectHidingCSS();

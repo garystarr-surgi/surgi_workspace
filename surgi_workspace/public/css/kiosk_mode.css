@@ -1,0 +1,62 @@
+/* Kiosk Mode CSS - Hide Workspace Selector Dropdown for Sales Users */
+/* This CSS file is loaded conditionally for Sales Users only */
+
+/* Hide workspace selector dropdown - Nuclear option targeting all possible selectors */
+aside[class*="sidebar"] > *:first-child button:not([class*="user"]):not([class*="avatar"]):not([class*="logout"]),
+aside[class*="sidebar"] > *:first-child > button:not([class*="user"]):not([class*="avatar"]):not([class*="logout"]),
+aside[class*="sidebar"] > *:first-child > * > button:not([class*="user"]):not([class*="avatar"]):not([class*="logout"]),
+aside[class*="sidebar"] > header button:not([class*="user"]):not([class*="avatar"]):not([class*="logout"]),
+aside[class*="sidebar"] > .header button:not([class*="user"]):not([class*="avatar"]):not([class*="logout"]),
+aside[class*="sidebar"] .dropdown:not([class*="user"]):not([class*="avatar"]):first-of-type,
+aside[class*="sidebar"] > *:first-child .dropdown:not([class*="user"]):not([class*="avatar"]),
+aside[class*="sidebar"] [role="combobox"]:not([class*="user"]):not([class*="avatar"]):first-of-type,
+aside[class*="sidebar"] select:not([class*="user"]):not([class*="avatar"]):first-of-type,
+aside[class*="sidebar"] [class*="workspace-selector"],
+aside[class*="sidebar"] [class*="workspace-switcher"],
+aside[class*="sidebar"] [class*="workspace-dropdown"],
+aside[class*="sidebar"] [data-workspace-selector],
+aside[class*="sidebar"] [data-workspace-switcher],
+aside[class*="sidebar"] [data-workspace],
+aside[class*="sidebar"] [aria-label*="workspace" i]:not([aria-label*="user" i]):not([aria-label*="logout" i]),
+aside[class*="sidebar"] [aria-label*="switch" i]:not([aria-label*="user" i]):not([aria-label*="logout" i]),
+.workspace-selector,
+[class*="workspace-selector"],
+[class*="workspace-switcher"],
+[class*="workspace-dropdown"],
+[data-workspace-selector],
+[data-workspace-switcher],
+[data-workspace] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  left: -9999px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Hide any dropdown menus that might be workspace selectors */
+aside[class*="sidebar"] .dropdown-menu:not([class*="user"]),
+aside[class*="sidebar"] [class*="dropdown-menu"]:not([class*="user"]) {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* Hide the first interactive element in sidebar (usually workspace selector) */
+aside[class*="sidebar"] > *:first-child {
+  /* Target first child container */
+}
+
+aside[class*="sidebar"] > *:first-child > *:first-child:not([class*="user"]):not([class*="avatar"]):not([class*="logout"]) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+}
