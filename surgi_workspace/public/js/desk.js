@@ -9,6 +9,7 @@
 
   const REMOVE_ITEMS = [
     "Workspaces",
+    "Assets",
     "Desktop",
     "Website",
     "Help",
