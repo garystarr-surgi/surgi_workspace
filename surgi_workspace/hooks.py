@@ -5,26 +5,9 @@ app_description = "Create custom workspaces for users"
 app_email = "gary.starr@surgishop.com"
 app_license = "MIT"
 
-
-# CRITICAL: Fixtures for workspaces
-fixtures = [
-    {
-        "dt": "Workspace",
-        "filters": [
-            [
-                "name",
-                "in",
-                [
-                    "Sales Workspace",
-                ]
-            ]
-        ]
-    }
-]
-
+# Client-side redirect / lock logic
 app_include_js = "/assets/surgi_workspace/js/desk.js"
 
+# Enforce sidebar AFTER install & migrate (v16-correct)
 after_install = "surgi_workspace.workspace_sidebar.ensure_sales_sidebar"
 after_migrate = "surgi_workspace.workspace_sidebar.ensure_sales_sidebar"
-
-
