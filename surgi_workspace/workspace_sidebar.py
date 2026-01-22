@@ -16,7 +16,7 @@ def ensure_sales_sidebar():
             "label": "Quotation",
             "link_to": "Quotation",
             "link_type": "DocType",
-            "icon": "sell",
+            "icon": "clipboard",
         },
         {
             "type": "Link",
